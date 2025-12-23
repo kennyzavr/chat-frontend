@@ -1,27 +1,47 @@
-# Chat
+# Приложение
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 11.0.3.
+Данное приложение - минималистичная платформа для обмена сообщениями в реальном времени.
 
-## Development server
+## Возможности платформы
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+- Доставка сообщений в реальном времени через WebSocket (Socket.IO).
+- Безопасная аутентификация: краткоживущие JWT access‑токены и refresh‑токены, привязанные к сессиям и хранимые в быстрых хранилищах.
+- Хранение истории и метаданных в реляционной базе с поддержкой транзакций и пагинации.
+- Управление множественными сессиями пользователя с возможностью выборочной инвалидации и отслеживания онлайн‑статуса.
 
-## Code scaffolding
+## Архитектура и модули
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+### Backend
 
-## Build
+репозиторий: [https://github.com/kennyzavr/chat-backend](https://github.com/kennyzavr/chat-backend)
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory. Use the `--prod` flag for a production build.
+- Интерфейсы:
+  - REST API для синхронных операций (регистрация, авторизация, получение истории, CRUD для сущностей).
+  - WebSocket gateway для подписки на события (новое сообщение, уведомления, состояние пользователя).
 
-## Running unit tests
+- Основные модули:
+  - Аутентификация: логин, подтверждение почты.
+  - Сессии и токены: генерация и валидация access/refresh токенов, хранение сессий в быстром хранилище.
+  - Пользователи: управление профилями, сопоставление сессий и socket‑подключений, статус онлайн/оффлайн.
+  - Сообщения и диалоги: доставка сообщений, история и пагинация.
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+- Хранение данных:
+  - Долговременные данные — реляционная БД (Postgres).
+  - Эфемерные / быстрые данные (сессии, refresh‑токены, rate limits) — Redis.
 
-## Running end-to-end tests
+### Frontend
 
-Run `ng e2e` to execute the end-to-end tests via [Protractor](http://www.protractortest.org/).
+репозиторий: [https://github.com/kennyzavr/chat-frontend](https://github.com/kennyzavr/chat-frontend)
 
-## Further help
+- Организация приложения:
+  - SPA‑клиент, разделённый на модули: авторизация, основной рабочий интерфейс, список диалогов, компоненты уведомлений.
+  - Централизованное управление состоянием для синхронизации данных между компонентами (стор/сервисный слой).
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+- Сетевой слой:
+  - HTTP‑сервисы для работы с REST API (получение истории, отправка сообщений, операции пользователя).
+  - WS‑сервис для управления Socket.IO‑подключением, подписками и обработкой событий (включая логику повторного подключения и реавторизации).
+
+- Поведение клиента:
+  - При логине клиент сохраняет токены и инициирует WS‑соединение.
+  - Realtime‑события обновляют стор и UI, синхронизируя данные между вкладками/компонентами.
+  - При истечении access‑токена используется refresh‑flow для обновления и поддержания соединения.
